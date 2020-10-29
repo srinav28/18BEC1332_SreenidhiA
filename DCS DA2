@@ -1,0 +1,91 @@
+%clearing workspace and closing all tabs
+clc
+clear all
+close all
+
+%%
+fibo=[] %initializing empty array to store the fibonacci sequence
+n = 1:100; %initializing length vector
+for i=1:100 %iterating over n
+    fibo(i)=(fibonacci(i)) %storing ith value of the fibonacci sequence in the ith position of array 'fibo'
+end
+for i=1:100
+    disp(fibo) %print out the fibonacci sequence upto a 100  values
+end
+
+subplot(2,1,1)
+plot(n,fibo) %plotting the fibonacci sequence against continuous time
+title('FIBONACCI SEQUENCE');
+xlabel('TIME');
+ylabel('AMPLITUDE');
+
+subplot(2,1,2)
+stem(fibo) %plotting discrete sampled points of the sequence
+title('SAMPLED SIGNAL');
+xlabel('TIME');
+ylabel('AMPLITUDE');
+
+%initializing required variables
+n1=3;  
+L=2^n1;
+xmax=13e+18; %defining max and min values for obtaining proper plot
+xmin=0;
+del=(xmax-xmin)/L; 
+partition=xmin:del:xmax; % definition of decision lines
+codebook=xmin-(del/2):del:xmax+(del/2); % definition of representation levels
+[index,quants]=quantiz(fibo,partition,codebook);
+% gives rounded off values of the samples
+figure(3);
+hold on;
+stem(quants); %to get discrete point plot of the quantized signal
+title('QUANTIZED SIGNAL');
+xlabel('TIME');
+ylabel('AMPLITUDE');
+hold off;
+% NORMALIZATION
+l1=length(index); % to convert 1 to n as 0 to n-1 indicies
+for i=1:l1
+ if (index(i)~=0) 
+ index(i)=index(i)-1;
+ end
+end
+l2=length(quants);
+for i=1:l2 % to convert the end representation levels within the range
+ if(quants(i)==xmin-(del/2))
+ quants(i)=xmin+(del/2);
+ end
+ if(quants(i)==xmax+(del/2))
+ quants(i)=xmax-(del/2);
+ end
+end
+% ENCODING
+code=de2bi(index,'left-msb'); % DECIMAL TO BINANRY CONV OF INDICIES
+k=1;
+for i=1:l1 % to convert column vector to row vector
+ for j=1:n1
+ coded(k)=code(i,j); 
+ j=j+1;
+ k=k+1;
+ end
+ i=i+1;
+end
+figure(4);
+hold on;
+stairs(coded); %plotting the coded signal
+axis([200 350 -2 2]) %defining axis to focus on required part of the plot
+%plot of digital signal
+title('DIGITAL SIGNAL');
+xlabel('TIME');
+ylabel('AMPLITUDE');
+hold off;
+% DEMODULATION
+code1=reshape(coded,n1,(length(coded)/n1)); %reshapes signal using the size vector
+index1=bi2de(code1,'left-msb'); %converts a binary row vector b to a decimal integer
+resignal=del*index+xmin+(del/2); %demodulated signal
+figure(5);
+hold on;
+plot(n,resignal);
+title('DEMODULATAED SIGNAL');
+xlabel('TIME');
+ylabel('AMPLITUDE');
+hold off;
